@@ -24,6 +24,12 @@ inputs:
   create-if-not-exists:
     description: 'Whether a comment should be created even if comment-tag is not found.'
     default: 'true'
+  owner:
+    description: 'Repository owner if different than one action is running in'
+    required: false
+  repo:
+    description: 'Repository name if different than one action is running in'
+    required: false
 runs:
   using: 'node24'
   main: 'lib/index.js'

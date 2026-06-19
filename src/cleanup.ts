@@ -19,6 +19,8 @@ async function run() {
     }
 
     const context = github.context;
+    const owner: string = core.getInput('owner') || context.repo.owner;
+    const repo: string = core.getInput('repo') || context.repo.repo;
     const issueNumber = parseInt(prNumber) || context.payload.pull_request?.number || context.payload.issue?.number;
 
     const octokit = github.getOctokit(githubToken);
@@ -32,14 +34,16 @@ async function run() {
 
     if (commentTagPattern) {
       for await (const { data: comments } of octokit.paginate.iterator(octokit.rest.issues.listComments, {
-        ...context.repo,
+        owner,
+        repo,
         issue_number: issueNumber,
       })) {
         const commentsToDelete = comments.filter((comment) => comment?.body?.includes(commentTagPattern));
         for (const commentToDelete of commentsToDelete) {
           core.info(`Deleting comment ${commentToDelete.id}.`);
           await octokit.rest.issues.deleteComment({
-            ...context.repo,
+            owner,
+            repo,
             comment_id: commentToDelete.id,
           });
         }

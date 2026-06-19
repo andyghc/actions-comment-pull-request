@@ -29,6 +29,8 @@ async function run() {
     }
 
     const context = github.context;
+    const owner: string = core.getInput('owner') || context.repo.owner;
+    const repo: string = core.getInput('repo') || context.repo.repo;
     const issueNumber = parseInt(prNumber) || context.payload.pull_request?.number || context.payload.issue?.number;
 
     const octokit = github.getOctokit(githubToken);
@@ -47,7 +49,8 @@ async function run() {
       await Promise.allSettled(
         validReactions.map(async (content) => {
           await octokit.rest.reactions.createForIssueComment({
-            ...context.repo,
+            owner,
+            repo,
             comment_id: commentId,
             content,
           });
@@ -93,12 +96,15 @@ async function run() {
       commentId: number;
       body: string;
     }) {
-      const { data: comment } = await octokit.rest.issues.updateComment({
+      const params = {
         owner,
         repo,
         comment_id: commentId,
-        body,
-      });
+      };
+
+      const { data: comment } = await (body
+        ? octokit.rest.issues.updateComment({ ...params, body })
+        : octokit.rest.issues.getComment(params));
 
       core.setOutput('id', comment.id);
       core.setOutput('body', comment.body);
@@ -128,7 +134,8 @@ async function run() {
       >;
       let comment: ListCommentsResponseDataType[0] | undefined;
       for await (const { data: comments } of octokit.paginate.iterator(octokit.rest.issues.listComments, {
-        ...context.repo,
+        owner,
+        repo,
         issue_number: issueNumber,
       })) {
         comment = comments.find((comment) => comment?.body?.includes(commentTagPattern));
@@ -138,26 +145,30 @@ async function run() {
       if (comment) {
         if (mode === 'upsert') {
           await updateComment({
-            ...context.repo,
+            owner,
+            repo,
             commentId: comment.id,
             body,
           });
           return;
         } else if (mode === 'recreate') {
           await deleteComment({
-            ...context.repo,
+            owner,
+            repo,
             commentId: comment.id,
           });
 
           await createComment({
-            ...context.repo,
+            owner,
+            repo,
             issueNumber,
             body,
           });
           return;
         } else if (mode === 'delete') {
           await deleteComment({
-            ...context.repo,
+            owner,
+            repo,
             commentId: comment.id,
           });
           return;
@@ -183,7 +194,8 @@ async function run() {
     }
 
     await createComment({
-      ...context.repo,
+      owner,
+      repo,
       issueNumber,
       body,
     });
