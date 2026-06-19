@@ -21,7 +21,7 @@ jobs:
     name: An example job to comment a PR
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Comment PR
         uses: andyghc/actions-comment-pull-request@v3
