@@ -20,16 +20,3 @@ jobs:
       
       - name: Lint
         run: npm run lint
-      
-      - name: Setup Git
-        if: github.event_name == 'push' && github.ref_name == 'main'
-        uses: fregante/setup-git-user@v1
-      
-      - name: Commit/push if there is a diff
-        if: github.event_name == 'push' && github.ref_name == 'main'
-        run: |
-          if ! git diff --exit-code; then
-            git add .
-            git commit -m "chore: compile and lint $GITHUB_SHA [ci skip]"
-            git push origin main
-          fi
